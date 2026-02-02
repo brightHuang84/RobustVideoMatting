@@ -32,7 +32,10 @@ class VideoReader(Dataset):
 class VideoWriter:
     def __init__(self, path, frame_rate, bit_rate=1000000):
         self.container = av.open(path, mode='w')
-        self.stream = self.container.add_stream('h264', rate=Fraction(frame_rate))
+        # PyAV 需要有理数且分子/分母不能过大；pims 的 frame_rate 可能是大分母有理数，先转 float 再限制分母
+        rate_float = float(frame_rate)
+        rate_rational = Fraction(rate_float).limit_denominator(1001)
+        self.stream = self.container.add_stream('h264', rate=rate_rational)
         self.stream.pix_fmt = 'yuv420p'
         self.stream.bit_rate = bit_rate
     
